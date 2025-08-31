@@ -1,0 +1,77 @@
+---
+title: "Assignment 1: Premier League Player Analysis Data 607"
+author: "Joao De Oliveira"
+date: "2025-08-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(knitr)
+library(ggrepel)
+```
+
+## Overview
+
+This report analyzes a dataset with English Premier League player data from the 2024/2025 season. The dataset includes performance data (goals, assists, passes, fouls, etc) and identification data (name, nationality, dob). Assuming I am a scout for a football (soccer) team and we need to get a top forward/striker, I will be selecting specific columns with metrics relevant for strikers.
+
+### Load the data from github
+
+```{r load-data}
+url <- "https://raw.githubusercontent.com/JDO-MSDS/assignment_1_DATA607-player_stats/refs/heads/main/player_stats_2024_2025_season.csv"
+
+player_stats <- read_csv(url)
+```
+
+### Select the most relevant metrics for forwards, create a new metric named goal contributions that includes goals+assists, and rename some columns. Then show the subset structure and top rows.
+
+```{r player filtered subset}
+player_subset <- player_stats %>%
+  select(Name = player_name,
+         `Preferred Foot`,
+         Appearances = appearances_,
+         `Expected Goals` = XG,
+         Goals,
+         `Expected Assists` = XA,
+         Assists,
+         `Pass Attempts` = pass_attempts,
+         `Pass Accuracy` = pass_accuracy,
+         `Dribble Attempts` = dribble_attempts,
+         `Dribble Accuracy` = dribble_accuracy,
+         `Touches in the Opposition Box`,
+         `Duels Won`,
+         `Aerial Duels Won`,
+         `Shots On Target Inside the Box`,
+         `Shots On Target Outside the Box`,
+         `Hit Woodwork`, 
+         Offsides) %>%
+  mutate(`Goal Contributions` = Goals + Assists) %>%
+  select(1:7, `Goal Contributions`, everything())
+
+# structure
+glimpse(player_subset)
+
+# table
+player_subset %>%
+  arrange(desc(`Goal Contributions`)) %>%
+  head(10) %>%
+  kable()
+```
+
+### Plot of Top 10 Forwards
+
+```{r plot of top players}
+top10_forward <- player_subset %>%
+  arrange(desc(`Goal Contributions`)) %>%
+  slice_head(n = 10)
+
+ggplot(top10_forward, aes(x = Goals, y = Assists, label = Name)) +
+  geom_point(color = "blue", size = 3) +
+  geom_text_repel() + 
+  theme_light()
+```
+
+## Conclusions
+
+After the analysis, we can see that Mohamed Salah was clearly the top forward in the Premier League last season. It's important to note that he has double the assists than the expect assists, which tells us he might not be in the 18 assists range on a long term. However, the gap between him and everyone else in goal contributions is substantial. In the graph, we can see that Haaland and Isak are goal scorers (not a lot of assists), while Cole Palmer is mainly an opportunity creator (top expected assists). Depending on the type of forward we (the team we work for) need for our team (scorer, creator, a dribbler), we can create another metric that emphasizes more on goals and touches in the area or instead on assists, pass, and dribble. 
